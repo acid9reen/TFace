@@ -1,61 +1,77 @@
-import numpy as np
-import os
-from tqdm import tqdm
 import random
-import operator
-from tkinter import _flatten
-import pdb
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy.stats import wasserstein_distance
-import torch
+import os
+from pathlib import Path
 
-def buildDict_people(datalistFile, featsFile):      # Building data dictionary
-    '''
-    This method is to build data dictionary 
+import numpy as np
+from tqdm import tqdm
+from scipy.stats import wasserstein_distance
+
+
+def buildDict_people(datalistFile, featsFile):
+    """
+    This method is to build data dictionary
     for collecting positive and negative pair similarities
-    '''
-    imgName = []
-    peopleName = []
-    peopleList = set()
-    with open(datalistFile, 'r') as f: datalist = f.readlines()
-    for i in datalist: 
-        tmpName = i.split()[0]
-        tmpeopleName = tmpName.split('/')[-2]
-        imgName.append(tmpName)
-        peopleName.append(tmpeopleName)
-        peopleList.add(tmpeopleName)
+    """
+    image_paths = []
+    person_names = []
+    unique_person_names = set()
+
+    with open(datalistFile, 'r') as f:
+        datalist = f.readlines()
+
+    for i in datalist:
+        image_path = Path(i.split()[0])
+        person_name = image_path.parts[-2]
+
+        image_paths.append(str(image_path))
+        person_names.append(person_name)
+        unique_person_names.add(person_name)
+
     feats = np.load(featsFile)
-    peopleList = sorted(list(peopleList))
+    unique_person_names = sorted(list(unique_person_names))
     featsDict = {}
-    for index, value in enumerate(imgName):
+
+    for index, value in enumerate(image_paths):
         featsDict[value] = feats[index,:]
+
     print('='*20 + 'LOADING DATALIST' + '='*20)
-    print(f"People Number: {len(peopleList)}")
-    print(f"Image Number: {len(peopleName)}")
+    print(f"People Number: {len(unique_person_names)}")
+    print(f"Image Number: {len(person_names)}")
     print(f"Features Shape: {np.shape(feats)}")
     print('='*56)
-    return featsDict, peopleList, peopleName, feats
 
-def getIndex(target_value, data_list):       # Search
-    '''
+    return featsDict, unique_person_names, person_names, feats
+
+
+def getIndex(target_value, data_list):
+    """
     Search the index of sample by identity
-    '''   
+    """
+
     index = [i for i, v in enumerate(data_list) if v == target_value]
+
     return index
 
+
 def cos(feats1, feats2):
-    '''
+    """
     Computing cosine distance
     For similarity
-    '''   
-    cos = np.dot(feats1, feats2) / (np.linalg.norm(feats1) * np.linalg.norm(feats2))
+    """
+
+    cos = (
+        np.dot(feats1, feats2)
+        / (np.linalg.norm(feats1) * np.linalg.norm(feats2))
+    )
+
     return cos
 
+
 def gen_samepeople_Similarity(featsDict, peopleList, peopleName, feats, outfile_dist_info, fix_num=24):
-    '''
+    """
     This method is to collect positive pair similarities
-    '''
+    """
+
     print('='*20 + 'GENERATE POSITIVE PAIRS' + '='*20)
     imgsName = list(featsDict.keys())
     imgsame_list1 = []
@@ -64,16 +80,22 @@ def gen_samepeople_Similarity(featsDict, peopleList, peopleName, feats, outfile_
     onepeople_count = 0
     id_similaritys = []
     pos_similarity_dist = {}
+
     for tar_people in tqdm(peopleList):
         index = getIndex(tar_people, peopleName)
-        assert len(index) != 1
+
+        if len(index) == 1:
+            onepeople_count += 1
+            continue
+
         id_similaritys = []
         for i in range(0,len(index)):
             compared_index = [value for value in index if index[i] != value]
             random.shuffle(compared_index)
             # avoid out_index
-            pick_num = fix_num if len(compared_index) > fix_num else len(compared_index)            
+            pick_num = fix_num if len(compared_index) > fix_num else len(compared_index)
             similaritys = []
+
             for j in range(pick_num):
                 imgsame_list1.append(imgsName[index[i]])
                 imgsame_list2.append(imgsName[compared_index[j]])
@@ -81,29 +103,36 @@ def gen_samepeople_Similarity(featsDict, peopleList, peopleName, feats, outfile_
                 same_similaritys.append(embedding_similarity)
                 similaritys.append(embedding_similarity)
                 id_similaritys.append(embedding_similarity)
+
             pos_similarity_dist[imgsName[index[i]]] = np.asarray(similaritys)
+
     same_similaritys = np.asarray(same_similaritys)
+
     assert len(imgsame_list1) == len(imgsame_list2) == len(same_similaritys)
+
     print(f"Positive Pair Number: {len(imgsame_list1)}")
     print(f"Maximum similarity value: {np.max(same_similaritys)}")
     print(f"Mean similarity value: {np.mean(same_similaritys)}")
     print(f"Minute similarity value: {np.min(same_similaritys)}")
     print(f"Std of similarity value: {np.std(same_similaritys)}")
     print('='*63)
+
     # Output the information of similarity
-    outfile_dist_info.write('='*20 + " For Positive Pairs " + '='*20 + '\n')                       
+    outfile_dist_info.write('='*20 + " For Positive Pairs " + '='*20 + '\n')
     outfile_dist_info.write(f"One People Number: {onepeople_count}"+ '\n')
     outfile_dist_info.write(f"Positive Pair Number: {len(imgsame_list1)}"+ '\n')
     outfile_dist_info.write(f"Maximum similarity value: {np.max(same_similaritys)}"+ '\n')
     outfile_dist_info.write(f"Mean similarity value: {np.mean(same_similaritys)}"+ '\n')
     outfile_dist_info.write(f"Minute similarity value: {np.min(same_similaritys)}"+ '\n')
     outfile_dist_info.write(f"Std of similarity value: {np.std(same_similaritys)}"+ '\n')
+
     return pos_similarity_dist, len(same_similaritys)
 
 def gen_diffpeople_Similarity(featsDict, peopleList, peopleName, feats, allpospair_nums, outfile_dist_info, fix_num=24):
-    '''
+    """
     This method is to collect negative pair similarities
-    '''
+    """
+
     print('='*20 + 'GENERATE NEGATIVE PAIRS' + '='*20)
     imgsName = list(featsDict.keys())
     imgdiff_list1 = []
@@ -157,9 +186,9 @@ def gen_diffpeople_Similarity(featsDict, peopleList, peopleName, feats, allpospa
     return neg_similarity_dist
 
 def gen_distance(pos_similarity_dist, neg_similarity_dist, outfile):
-    '''
+    """
     This method is to calculate quality scores via wasserstein distance
-    '''
+    """
     outfile = open(outfile, 'w')
     print('='*20 + 'OUTPUT' + '='*20)
     posimglist = list(pos_similarity_dist.keys())
@@ -173,9 +202,9 @@ def gen_distance(pos_similarity_dist, neg_similarity_dist, outfile):
         outfile.write(img + '\t' + str(w_distance) + '\n')
 
 def cal_idscore(result_file):
-    '''
+    """
     This method is to calculate quality scores of identity
-    '''
+    """
     with open(result_file, 'r') as f: txtContent = f.readlines()
     peoid= []
     quality_scores = []
@@ -198,11 +227,11 @@ def cal_idscore(result_file):
     id_score = {}
     for i in tqdm(peoid): id_score[i] = (idsocre_dist[i][0] / idsocre_dist[i][1])
     return id_score
- 
+
 def norm_labels(data_root, outfile_wdistacne, outfile_result, id_score):
-    '''
+    """
     This method is to normalize quality scores
-    '''
+    """
     outfile_result = open(outfile_result, 'w')
     with open(outfile_wdistacne, 'r') as f: txtContent = f.readlines()
     imgpath = []
@@ -225,10 +254,10 @@ def norm_labels(data_root, outfile_wdistacne, outfile_result, id_score):
     return imgpath_select, quality_scores_select
 
 if __name__ == "__main__":
-    '''
+    """
     This method is to generate quality pseudo scores by similarity distribution distance (SDD)
     and save it to txt files
-    '''
+    """
     data_root    = '/data/home/fuzhaoou/Dataset/MS1M/MS1M_arcface_112'
     datalistFile = './DATA.label'
     featsFile    = './feats_npy/Embedding_Features.npy'
@@ -253,5 +282,5 @@ if __name__ == "__main__":
     quality_pseudo_labels = np.mean(quality_scores_metrix, axis=1)
     outfile_result = open(outfile_result, 'w')
     # output quality pseudo labels
-    for index, value in enumerate(quality_pseudo_labels):                      
+    for index, value in enumerate(quality_pseudo_labels):
         outfile_result.write(imgpath_select[index] + '\t' + str(value) + '\n')
