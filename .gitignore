@@ -161,3 +161,10 @@ cython_debug/
 
 # vscode
 .vscode/
+
+# Generated files
+
+DATA.label
+DATA.labelpath
+
+*.npy
