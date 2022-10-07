@@ -7,15 +7,15 @@ from tqdm import tqdm
 
 
 class GenDatalistNamespace(argparse.Namespace):
-    outfile: str = './DATA.label'
+    outfile: str = "./DATA.label"
     data_root: str
 
 
 def parse_args() -> GenDatalistNamespace:
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--outfile', help='File to write results')
-    parser.add_argument('data_root', help='Path to dataset root')
+    parser.add_argument("--outfile", help="File to write results")
+    parser.add_argument("data_root", help="Path to dataset root")
 
     return parser.parse_args(namespace=GenDatalistNamespace())
 
@@ -27,9 +27,9 @@ def gentxt(data_root: str, outfile: str) -> int:
     """
 
     # output file1
-    outfile_1 = open(outfile, 'w')
+    outfile_1 = open(outfile, "w")
     # output file2
-    outfile_2 = open(outfile + 'path', 'w')
+    outfile_2 = open(outfile + "path", "w")
     data = ImageFolder(data_root)
     image_counter = 0
 
@@ -41,7 +41,7 @@ def gentxt(data_root: str, outfile: str) -> int:
         img = os.path.join(*path.parts[-2:])
 
         print(img, file=outfile_1)
-        print(str(path) + '\t' + str(person_index), file=outfile_2)
+        print(str(path) + "\t" + str(person_index), file=outfile_2)
 
     outfile_1.close()
     outfile_2.close()
@@ -51,7 +51,7 @@ def gentxt(data_root: str, outfile: str) -> int:
 
 def main(args: GenDatalistNamespace):
     gentxt_res = gentxt(args.data_root, args.outfile)
-    print(f'Total images: {gentxt_res}')
+    print(f"Total images: {gentxt_res}")
 
 
 if __name__ == "__main__":

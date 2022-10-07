@@ -19,7 +19,7 @@ def setup_dataset():
     """
 
     dataloader, class_num = load_data_txt(conf, label=False, train=False)
-    return dataloader,class_num
+    return dataloader, class_num
 
 
 def setup_backbone() -> nn.Module:
@@ -29,30 +29,30 @@ def setup_backbone() -> nn.Module:
     """
 
     # MobileFaceNet
-    if conf.backbone == 'MFN':
+    if conf.backbone == "MFN":
         net = model_mobilefaceNet.MobileFaceNet(
-            [112,112],
+            [112, 112],
             conf.embedding_size,
-            output_name = 'GDC',
-            use_type = "Rec",
+            output_name="GDC",
+            use_type="Rec",
         ).to(device)
 
     # ResNet50
     else:
-        net = model.R50([112, 112], use_type = "Rec").to(device)
+        net = model.R50([112, 112], use_type="Rec").to(device)
 
     # load trained model weights
     if conf.eval_model != None:
         net_dict = net.state_dict()
         eval_dict = torch.load(conf.eval_model, map_location=device)
-        eval_dict = {k.replace('module.', ''): v for k, v in eval_dict.items()}
-        same_dict =  {k: v for k, v in eval_dict.items() if k in net_dict}
+        eval_dict = {k.replace("module.", ""): v for k, v in eval_dict.items()}
+        same_dict = {k: v for k, v in eval_dict.items() if k in net_dict}
         net_dict.update(same_dict)
         net.load_state_dict(net_dict)
 
     # if use multi-GPUs
-    if device != 'cpu' and len(multi_GPUs) > 1:
-        net = nn.DataParallel(net, device_ids = multi_GPUs)
+    if device != "cpu" and len(multi_GPUs) > 1:
+        net = nn.DataParallel(net, device_ids=multi_GPUs)
 
     net.eval()
 
@@ -65,10 +65,7 @@ def calculate_cosine_distance(feats1, feats2):
     For similarity
     """
 
-    cos = (
-        np.dot(feats1, feats2)
-        / (np.linalg.norm(feats1) * np.linalg.norm(feats2))
-    )
+    cos = np.dot(feats1, feats2) / (np.linalg.norm(feats1) * np.linalg.norm(feats2))
 
     return cos
 
@@ -82,14 +79,15 @@ def npy2txt(img_list, feats_nplist, outfile) -> None:
 
     print(np.shape(allFeats))
 
-    with open(img_list, 'r') as f:
+    with open(img_list, "r") as f:
         for index, value in tqdm(enumerate(f)):
             imgPath = value.split()[0]
             feats = allFeats[index]
-            feats = ' '.join(map(str, feats))
+            feats = " ".join(map(str, feats))
 
             # ouput to the txt
-            print(imgPath + ' ' + feats, file=outfile)
+            print(imgPath + " " + feats, file=outfile)
+
 
 if __name__ == "__main__":
     """
@@ -110,13 +108,12 @@ if __name__ == "__main__":
     # Create outfile folder if
     os.makedirs(os.path.dirname(outfile), exist_ok=True)
 
-    with open(conf.img_list, 'r') as f:
+    with open(conf.img_list, "r") as f:
         txtContent = f.readlines()
 
         # computer the number of samples
         sample_num = len(txtContent)
-        print(f'Number of samples = {sample_num}')
-
+        print(f"Number of samples = {sample_num}")
 
     feats = np.zeros([sample_num, conf.embedding_size])
 
