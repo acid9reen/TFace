@@ -168,3 +168,5 @@ DATA.label
 DATA.labelpath
 
 *.npy
+quality/generate_pseudo_labels/annotations/*.txt
+*log
