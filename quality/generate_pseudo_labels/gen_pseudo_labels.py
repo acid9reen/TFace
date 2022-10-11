@@ -163,37 +163,53 @@ def gen_diffpeople_Similarity(
     pick_num = fix_num
     compared_imgname = [value for value in imgsName]
     random.shuffle(compared_imgname)
+
     for tar_people in tqdm(peopleList):
         id_similaritys = []
         same_idx_list = getIndex(tar_people, peopleName)
+
         for i in same_idx_list:
             similaritys = []
             repetition = []
             pick_count = 0
             rand_num = 0
+
             while pick_count < pick_num:  # number of same people in negative pairs
                 rand_num = random.randint(0, len(compared_imgname) - 1)
-                if compared_imgname[rand_num] in repetition:
+
+                rand_image_dataset_relative_path = Path(compared_imgname[rand_num])
+                image_dataset_relative_path = Path(imgsName[i])
+
+                image_in_repetition = compared_imgname[rand_num] in repetition
+                same_person_on_both_images = (
+                    rand_image_dataset_relative_path.parts[0]
+                    == image_dataset_relative_path.parts[0]
+                )
+
+                if image_in_repetition or same_person_on_both_images:
                     continue
-                if (
-                    compared_imgname[rand_num].split("/")[1]
-                    == imgsName[i].split("/")[1]
-                ):
-                    continue
+
                 repetition.append(compared_imgname[rand_num])
                 imgdiff_list1.append(imgsName[i])
                 imgdiff_list2.append(compared_imgname[rand_num])
+
                 embedding_similarity = cos(
-                    featsDict[imgsName[i]], featsDict[compared_imgname[rand_num]]
+                    featsDict[imgsName[i]],
+                    featsDict[compared_imgname[rand_num]],
                 )
+
                 diff_similaritys.append(embedding_similarity)
                 similaritys.append(embedding_similarity)
                 rand_num += 1
                 pick_count += 1
                 id_similaritys.append(embedding_similarity)
+
             neg_similarity_dist[imgsName[i]] = np.asarray(similaritys)
+
     diff_similaritys = np.asarray(diff_similaritys)
+
     assert len(imgdiff_list1) == len(imgdiff_list2) == len(diff_similaritys)
+
     print(f"One People Number: {onepeople_count}")
     print(f"Negative Pair Number: {len(imgdiff_list1)}")
     print(f"Maximum similarity value: {np.max(diff_similaritys)}")
@@ -201,6 +217,7 @@ def gen_diffpeople_Similarity(
     print(f"Minute similarity value: {np.min(diff_similaritys)}")
     print(f"Std of similarity value: {np.std(diff_similaritys)}")
     print("=" * 63)
+
     outfile_dist_info.write("=" * 20 + " For Negative Pairs " + "=" * 20 + "\n")
     outfile_dist_info.write(f"One People Number: {onepeople_count}" + "\n")
     outfile_dist_info.write(f"Negative Pair Number: {len(imgdiff_list1)}" + "\n")
@@ -216,6 +233,7 @@ def gen_diffpeople_Similarity(
     outfile_dist_info.write(
         f"Std of similarity value: {np.std(diff_similaritys)}" + "\n"
     )
+
     return neg_similarity_dist
 
 
@@ -223,12 +241,17 @@ def gen_distance(pos_similarity_dist, neg_similarity_dist, outfile):
     """
     This method is to calculate quality scores via wasserstein distance
     """
+
     outfile = open(outfile, "w")
     print("=" * 20 + "OUTPUT" + "=" * 20)
+
     posimglist = list(pos_similarity_dist.keys())
     negimglist = list(pos_similarity_dist.keys())
+
     assert len(posimglist) == len(negimglist)
+
     imglists = posimglist
+
     for img in tqdm(imglists):
         tar_pos_similaritys = pos_similarity_dist[img]
         tar_neg_similaritys = neg_similarity_dist[img]
@@ -240,34 +263,42 @@ def cal_idscore(result_file):
     """
     This method is to calculate quality scores of identity
     """
+
     with open(result_file, "r") as f:
         txtContent = f.readlines()
+
     peoid = []
     quality_scores = []
     idsocre_dist = {}
     for i in txtContent:
-        idsocre_dist[i.split()[0].split("/")[1]] = [0, 0]  # init
+        idsocre_dist[Path(i.split()[0]).parts[1]] = [0, 0]  # init
+
     quality_scores = []
     for i in txtContent:
         quality_scores.append(float(i.split()[1]))
+
     # normalize quality pseudo labels
     quality_scores = (
         (quality_scores - np.min(quality_scores))
         / (np.max(quality_scores) - np.min(quality_scores))
         * 100
     )
+
     count = 0
     peoid = set()
+
     for i in tqdm(txtContent):
-        idname = i.split()[0].split("/")[1]
+        idname = Path(i.split()[0]).parts[1]
         idsocre_dist[idname][0] += quality_scores[count]
         idsocre_dist[idname][1] += 1
         count += 1
         peoid.add(idname)
+
     peoid = list(peoid)
     id_score = {}
     for i in tqdm(peoid):
         id_score[i] = idsocre_dist[i][0] / idsocre_dist[i][1]
+
     return id_score
 
 
@@ -309,7 +340,8 @@ if __name__ == "__main__":
     This method is to generate quality pseudo scores by similarity distribution distance (SDD)
     and save it to txt files
     """
-    data_root = "/data/home/fuzhaoou/Dataset/MS1M/MS1M_arcface_112"
+
+    data_root = r"C:/Users/Ruslan/repos/face_image_quality_test/lfw-deepfunneled"
     datalistFile = "./DATA.label"
     featsFile = "./feats_npy/Embedding_Features.npy"
     create_dir = "./annotations"
@@ -319,7 +351,8 @@ if __name__ == "__main__":
     outfile_result = f"{create_dir}/quality_pseudo_labels.txt"
     outfile_dist_info = open(outfile_dist_info, "w")
     featsDict, peopleList, peopleName, feats = buildDict_people(datalistFile, featsFile)
-    quality_scores_metrix = np.zeros([len(peopleName), 12])
+    quality_scores_list = []
+
     for i in range(12):
         pos_similarity_dist, pos_pairs_num = gen_samepeople_Similarity(
             featsDict, peopleList, peopleName, feats, outfile_dist_info
@@ -332,9 +365,12 @@ if __name__ == "__main__":
         imgpath_select, quality_scores_select = norm_labels(
             data_root, outfile_wdistacne, outfile_result, id_score
         )
-        quality_scores_metrix[:, i] = quality_scores_select
-    quality_pseudo_labels = np.mean(quality_scores_metrix, axis=1)
-    outfile_result = open(outfile_result, "w")
-    # output quality pseudo labels
-    for index, value in enumerate(quality_pseudo_labels):
-        outfile_result.write(imgpath_select[index] + "\t" + str(value) + "\n")
+        quality_scores_list.append(quality_scores_select)
+
+    quality_scores_matrix = np.vstack(quality_scores_list)
+    quality_pseudo_labels = np.mean(quality_scores_matrix, axis=1)
+
+    with open(outfile_result, "w") as outfile_result:
+        # output quality pseudo labels
+        for index, value in enumerate(quality_pseudo_labels):
+            print(imgpath_select[index] + "\t" + str(value), file = outfile_result)

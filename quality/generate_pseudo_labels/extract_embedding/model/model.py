@@ -3,20 +3,14 @@ import torch.nn as nn
 from torch.nn import (
     Linear,
     Conv2d,
-    BatchNorm1d,
     BatchNorm2d,
     PReLU,
-    ReLU,
-    Sigmoid,
     Dropout,
     MaxPool2d,
-    AdaptiveAvgPool2d,
     Sequential,
     Module,
 )
 from collections import namedtuple
-import numpy as np
-import pdb
 
 
 class Flatten(Module):

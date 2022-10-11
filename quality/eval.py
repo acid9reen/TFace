@@ -42,7 +42,7 @@ def network(eval_model, device):
 if __name__ == "__main__":
     imgpath = "./demo_imgs/1.jpg"  # [1,2,3.jpg]
     device = "cpu"  # 'cpu' or 'cuda:x'
-    eval_model = "./model/SDD_FIQA_checkpoints_r50.pth"  # checkpoint
+    eval_model = r'quality\checkpoints\MS1M_Quality_Regression\S1\MFN_net_20epoch.pth'  # checkpoint
     net = network(eval_model, device)
     input_data = read_img(imgpath)
     pred_score = net(input_data).data.cpu().numpy().squeeze()

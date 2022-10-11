@@ -15,7 +15,6 @@ class TrainQualityTask:
     """TrainTask of quality model"""
 
     def __init__(self, config):
-        super(TrainQualityTask, self).__init__()
         self.config = config
 
     def dataSet(self):
@@ -27,12 +26,14 @@ class TrainQualityTask:
         # Network Setup
         device = self.config.device
         multi_GPUs = self.config.multi_GPUs
+
         if conf.backbone == "MFN":  # MobileFaceNet
             net = model_mobilefaceNet.MobileFaceNet(
                 [112, 112], 512, output_name="GDC", use_type="Qua"
             ).to(device)
         else:  # ResNet50
             net = model.R50([112, 112], use_type="Qua").to(device)
+
         # Transfer learning from recognition model
         if self.config.finetuning_model is not None:
             print("=" * 20 + "FINE-TUNING" + "=" * 20)
@@ -54,8 +55,10 @@ class TrainQualityTask:
             ignore_dictName = list(diff_dict.keys())
             print("=" * 20 + "INGNORING LAYERS:" + "=" * 20)
             print(ignore_dictName)
+
         if device != "cpu" and len(multi_GPUs) > 1:
             net = nn.DataParallel(net, device_ids=multi_GPUs)
+
         return net
 
     def trainSet(self, net):
