@@ -1,0 +1,9 @@
+matplotlib
+numpy
+onnxruntime-gpu
+pip-tools
+scipy
+seaborn
+torch
+torchvision
+tqdm
