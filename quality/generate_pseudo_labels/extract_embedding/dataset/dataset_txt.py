@@ -2,8 +2,6 @@ from torch.utils.data import DataLoader
 from torch.utils import data
 from PIL import Image
 import numpy as np
-import os
-
 
 class Dataset(data.Dataset):
     """
@@ -12,7 +10,6 @@ class Dataset(data.Dataset):
 
     def __init__(self, conf, label=True):
         super().__init__()
-        self.data_root = conf.data_root
         self.img_list = conf.img_list
         self.transform = conf.transform
         self.batch_size = conf.batch_size
@@ -40,7 +37,7 @@ class Dataset(data.Dataset):
         This method is used during the visiting of dataloader
         Data processing and output
         """
-        imgPath = os.path.join(self.data_root, self.imgPath[index])
+        imgPath = self.imgPath[index]
         img = Image.open(imgPath).convert("RGB")
         if self.transform is not None:
             img = self.transform(img)  # data processing

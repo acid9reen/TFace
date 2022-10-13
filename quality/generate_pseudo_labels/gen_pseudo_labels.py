@@ -271,7 +271,7 @@ def cal_idscore(result_file):
     quality_scores = []
     idsocre_dist = {}
     for i in txtContent:
-        idsocre_dist[Path(i.split()[0]).parts[1]] = [0, 0]  # init
+        idsocre_dist[Path(i.split()[0]).parts[0]] = [0, 0]  # init
 
     quality_scores = []
     for i in txtContent:
@@ -288,7 +288,7 @@ def cal_idscore(result_file):
     peoid = set()
 
     for i in tqdm(txtContent):
-        idname = Path(i.split()[0]).parts[1]
+        idname = Path(i.split()[0]).parts[0]
         idsocre_dist[idname][0] += quality_scores[count]
         idsocre_dist[idname][1] += 1
         count += 1
@@ -314,7 +314,7 @@ def norm_labels(data_root, outfile_wdistacne, outfile_result, id_score):
     for i in tqdm(txtContent):
         imgname = i.split()[0]
         mean_wdistance = float(i.split()[1])
-        imgpath.append(data_root + imgname)
+        imgpath.append(os.path.join(data_root, imgname))
         quality_scores.append(mean_wdistance)
     quality_scores = np.asarray(quality_scores)
     quality_scores = (
@@ -367,7 +367,7 @@ if __name__ == "__main__":
         )
         quality_scores_list.append(quality_scores_select)
 
-    quality_scores_matrix = np.vstack(quality_scores_list)
+    quality_scores_matrix = np.vstack(quality_scores_list).transpose()
     quality_pseudo_labels = np.mean(quality_scores_matrix, axis=1)
 
     with open(outfile_result, "w") as outfile_result:
