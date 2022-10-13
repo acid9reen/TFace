@@ -341,7 +341,7 @@ if __name__ == "__main__":
     and save it to txt files
     """
 
-    data_root = r"C:/Users/Ruslan/repos/face_image_quality_test/lfw-deepfunneled"
+    data_root = r"C:\Users\Ruslan\repos\face_image_quality_test\lfw-deepfunneled"
     datalistFile = "./DATA.label"
     featsFile = "./feats_npy/Embedding_Features.npy"
     create_dir = "./annotations"
