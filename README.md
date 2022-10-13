@@ -61,6 +61,11 @@ This module implements various state-of-art algorithms for face security.
 
 This module implements the SDD-FIQA algorithm for face quality.
 
+#### Install all dependencies
+```bash
+pip install -r requirements/requirements.txt
+```
+
 #### Paper List:
 
 **`2021.3`**: `SDD-FIQA: Unsupervised Face Image Quality Assessment with Similarity Distribution Distance` accepted by **CVPR2021**. [[paper](https://arxiv.org/abs/2103.05977)]
