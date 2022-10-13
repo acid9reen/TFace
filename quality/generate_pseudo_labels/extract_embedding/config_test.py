@@ -19,12 +19,23 @@ class Config:
         T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
 
+    # Transformations for original authors' models:
+    # transform = T.Compose([
+    #     T.Resize((112, 112)),
+    #     T.ToTensor(),
+    #     T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    # ])
+
     # <<---- network settings ---->>
     # [MFN, R_50, Onnx]
     backbone = "Onnx"
+
+    # Do not touch, this is for original authors' models
+    embedding_size = 512
+
+    # <<---- evaluation settings ---->>
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     multi_GPUs = [0]
-    embedding_size = 512
     batch_size = 60
     pin_memory = True
     num_workers = 4

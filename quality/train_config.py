@@ -1,17 +1,16 @@
+import os
+
 import torch
 import torchvision.transforms as T
 
 
 class Config:
-    # dataset
+    # <<---- dataset ---->>
+    dataset_name = ""
     img_list = r"./generate_pseudo_labels/annotations/quality_pseudo_labels.txt"
-    finetuning_model = None
 
-    # save settings
-    checkpoints = r"./checkpoints/MS1M_Quality_Regression/S1"
-    checkpoints_name = "MFN"
 
-    # data preprocess
+    # <<---- data preprocess ---->>
     transform = T.Compose([
         T.Resize((112, 112)),
         T.RandomHorizontalFlip(),
@@ -19,23 +18,44 @@ class Config:
         T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
 
-    # training settings
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    seed = 0
-    multi_GPUs = [0]
+
+    # <<---- network settings ---->>
     # [MFN, R_50]
     backbone = "MFN"
-    pin_memory = True
-    num_workers = 6
-    batch_size = 70
+    finetuning_model = None
+
+
+    # <<---- training settings ---->>
+    seed = 0
     epoch = 20
+    # ['L1', 'L2', 'SmoothL1']
+    loss = "SmoothL1"
     lr = 0.0001
     stepLR = [5, 10]
     weight_decay = 0.0005
-    display = 100
+
+
+    # <<---- device configuration ---->>
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    batch_size = 70
+    pin_memory = True
+    multi_GPUs = [0]
+    num_workers = 6
+
+
+    # <<---- save settings ---->>
+    checkpoints = os.path.join(
+        r"./checkpoints/Quality_Regression/",
+        dataset_name,
+        backbone,
+    )
+    checkpoints_name = backbone
     saveModel_epoch = 1
-    # ['L1', 'L2', 'SmoothL1']
-    loss = "SmoothL1"
+
+
+    # <<---- other ---->>
+    display = 100
+
 
     def to_dict(self) -> dict[str, float | str]:
         return {
