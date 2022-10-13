@@ -9,7 +9,10 @@ from tqdm import tqdm
 
 from config_test import config as conf
 from dataset.dataset_txt import load_data as load_data_txt
-from model import model_mobilefaceNet, model
+from model import model_mobilefaceNet
+from model import ModelProtocol
+from model import OnnxModelAdapter
+from model import R50
 
 
 def setup_dataset():
@@ -22,14 +25,14 @@ def setup_dataset():
     return dataloader, class_num
 
 
-def setup_backbone() -> nn.Module:
+def setup_backbone() -> ModelProtocol:
     """
     Backbone setup
     Load a Backbone for training, support MobileFaceNet(MFN) and ResNet50(R50)
     """
 
     # MobileFaceNet
-    if conf.backbone == "MFN":
+    if (backbone := conf.backbone) == "MFN":
         net = model_mobilefaceNet.MobileFaceNet(
             [112, 112],
             conf.embedding_size,
@@ -38,8 +41,15 @@ def setup_backbone() -> nn.Module:
         ).to(device)
 
     # ResNet50
+    elif backbone == "R_50":
+        net = R50([112, 112], use_type="Rec").to(device)
+    # Onnx model
     else:
-        net = model.R50([112, 112], use_type="Rec").to(device)
+        return OnnxModelAdapter(
+            conf.eval_model,
+            int(conf.device[conf.device.rfind(':') + 1:]),
+            conf.gpu_mem_limit,
+        )
 
     # load trained model weights
     if conf.eval_model != None:
