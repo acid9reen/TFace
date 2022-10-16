@@ -5,8 +5,10 @@ import torchvision.transforms as T
 
 
 class Config:
+    PROJECT_NAME = "face_image_quality"
+
     # <<---- dataset ---->>
-    dataset_name = ""
+    dataset_name = "Unknown"
     img_list = r"./generate_pseudo_labels/annotations/quality_pseudo_labels.txt"
 
 
@@ -66,6 +68,7 @@ class Config:
             "step lr": str(self.stepLR),
             "loss": self.loss,
             "backbone": self.backbone,
+            "dataset_name": self.dataset_name,
         }
 
 
