@@ -1,14 +1,18 @@
 import os
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import wandb
 from tqdm import tqdm
+
+
 from generate_pseudo_labels.extract_embedding.model import model_mobilefaceNet, model
 from generate_pseudo_labels.extract_embedding.dataset.dataset_txt import (
     load_data as load_data_txt,
 )
-from train_config import config as conf
-import numpy as np
+import train_config
 
 
 class TrainQualityTask:
@@ -27,7 +31,7 @@ class TrainQualityTask:
         device = self.config.device
         multi_GPUs = self.config.multi_GPUs
 
-        if conf.backbone == "MFN":  # MobileFaceNet
+        if self.config.backbone == "MFN":  # MobileFaceNet
             net = model_mobilefaceNet.MobileFaceNet(
                 [112, 112], 512, output_name="GDC", use_type="Qua"
             ).to(device)
@@ -39,7 +43,7 @@ class TrainQualityTask:
             print("=" * 20 + "FINE-TUNING" + "=" * 20)
             net_dict = net.state_dict()
             print("=" * 20 + "LOADING NETWROK PARAMETERS" + "=" * 20)
-            pretrained_dict = torch.load(conf.finetuning_model, map_location=device)
+            pretrained_dict = torch.load(self.config.finetuning_model, map_location=device)
             pretrained_dict = {
                 k.replace("module.", ""): v for k, v in pretrained_dict.items()
             }
@@ -93,19 +97,24 @@ class TrainQualityTask:
         itersNum = 1
         os.makedirs(self.config.checkpoints, exist_ok=True)
         logfile = open(os.path.join(self.config.checkpoints, "log"), "w")
+
         for e in range(epoch):
             loss_sum = 0
+
             for _, data, labels in tqdm(
                 trainloader, desc=f"Epoch {e+1}/{epoch}", total=len(trainloader)
             ):
                 data = data.to(self.config.device)
                 labels = labels.to(self.config.device).float()
+
                 preds = net(data).squeeze()
                 loss = criterion(preds, labels)
                 loss_sum += np.mean(loss.cpu().detach().numpy())
+
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+
                 if itersNum % self.config.display == 0:
                     logfile = open(os.path.join(self.config.checkpoints, "log"), "a")
                     logfile.write(
@@ -114,34 +123,59 @@ class TrainQualityTask:
                         + f"{loss}"
                         + "\n"
                     )
+
                 itersNum += 1
             mean_loss = loss_sum / len(trainloader)
+            wandb.log({"mean_loss": mean_loss})
+
             print(f"LR = {optimizer.param_groups[0]['lr']} | Mean_Loss = {mean_loss}")
+
             logfile.write(
                 f"LR = {optimizer.param_groups[0]['lr']} | Mean_Loss = {mean_loss}"
                 + "\n"
             )
+
             if (e + 1) % self.config.saveModel_epoch == 0:  # save model
                 os.makedirs(self.config.checkpoints, exist_ok=True)
                 savePath = os.path.join(
                     self.config.checkpoints,
                     f"{self.config.checkpoints_name}_net_{e+1}epoch.pth",
                 )
+
                 torch.save(net.state_dict(), savePath)
                 print(f"SAVE MODEL: {savePath}")
+                wandb.save(savePath)
+
             scheduler.step()
+
         return net
 
 
+def init_wandb_logger(config: train_config.Config) -> None:
+    wandb.init(
+        project=config.PROJECT_NAME,
+        name=config.backbone,
+        config=repr(config),
+    )
+
+
 if __name__ == "__main__":
+
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
-    np.random.seed(conf.seed)
-    train_task = TrainQualityTask(conf)
-    torch.manual_seed(conf.seed)
+    np.random.seed(train_config.Config.seed)
+    train_task = TrainQualityTask(train_config.Config)
+    torch.manual_seed(train_config.Config.seed)
+
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(conf.seed)
+        torch.cuda.manual_seed_all(train_config.Config.seed)
+
     net = train_task.backboneSet()
+    init_wandb_logger(train_config.Config())
+    wandb.save(train_config.__file__)
+
+    wandb.watch(net, log_freq=100)
+
     trainloader = train_task.dataSet()
     criterion, optimizer, scheduler = train_task.trainSet(net)
-    net = train_task.train(trainloader, net, epoch=conf.epoch)
+    net = train_task.train(trainloader, net, epoch=train_config.Config.epoch)
