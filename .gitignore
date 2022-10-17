@@ -174,3 +174,6 @@ quality/generate_pseudo_labels/annotations/*.txt
 quality/checkpoints
 
 wandb/
+
+# Converted models
+*.onnx
