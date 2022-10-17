@@ -155,7 +155,7 @@ def init_wandb_logger(config: train_config.Config) -> None:
     wandb.init(
         project=config.PROJECT_NAME,
         name=config.backbone,
-        config=repr(config),
+        config=config.to_dict(),
     )
 
 
