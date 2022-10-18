@@ -15,11 +15,11 @@ _\<dataset root\>/\<person name\>/\<filename\>_
 Another **NOTE**: all scripts run in the manner, described below, navigate to needed directory to run python modules as described
 
 ### 1. Modify configuration file
-Modify paths in config (_./generate_pseudo_labels/extract_embedding/config_test.py_)
+Modify paths in config (_./generate\_pseud\_labels/extract\_embedding/config\_test.py_)
 
 For most cases you want to modify some of the following variables:
-   * _data_root_
-   * _eval_model_
+   * _data\_root_
+   * _eval\_model_
    * _backbone_
 
 **NOTE**: if you modify eval model, possibly you also want to edit backbone
@@ -30,28 +30,33 @@ For most cases you want to modify some of the following variables:
 Change all \<...\> occurrences for your specific parameters
 
 ```bash
-python ./generate_pseudo_labels/gen_datalist.py <path to dataset root>
+python ./gen_datalist.py <path to dataset root>
 ```
+
+**NOTE**: _gen\_datalist.py__ can be found in _./generate\_pseudo\_labels/_
 
 ### 3. Extract face embeddings
 
 ```bash
-python ./generate_pseudo_labels/extract_embedding/extract_feats.py
+python ./extract_feats.py
 ```
+
+**NOTE**: _extract\_feats.py__ can be found in _.'./generate\_pseudo\_labels/extract\_embedding/_
 
 ### 4. Calculate quality pseudo-labels
 Firstly you need to open script (_'generate_pseudo_labels/gen_pseudo_labels.py'_) and modify _data_root_ variable inside '_if \_\_name\_\_ == "\_\_main\_\__"', after that, simply run script:
 
 ```bash
-python ./generate_pseudo_labels/gen_pseudo_labels.py
+python ./gen_pseudo_labels.py
 ```
 
+**NOTE**: _gen\_pseudo\_labels.py_ can be found in _./generate\_pseudo\_labels/_
 
 ## Training of Quality Regression Model
 
 ### 1. Modify configuration file
 
-Change needed values in _train_confing.py_
+Change needed values in _train\_confing.py_
 
 ### 2. Run training
 
