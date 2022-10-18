@@ -30,22 +30,27 @@ For most cases you want to modify some of the following variables:
 Change all \<...\> occurrences for your specific parameters
 
 ```bash
-python ./generate_pseudo_labels/gen_datalist.py <path to dataset root>
+python ./gen_datalist.py <path to dataset root>
 ```
+
+**NOTE**: _gen_datalist.py__ can be found in _./generate_pseudo_labels/_
 
 ### 3. Extract face embeddings
 
 ```bash
-python ./generate_pseudo_labels/extract_embedding/extract_feats.py
+python ./extract_feats.py
 ```
+
+**NOTE**: _extract_feats.py__ can be found in _.'./generate_pseudo_labels/extract_embedding/_
 
 ### 4. Calculate quality pseudo-labels
 Firstly you need to open script (_'generate_pseudo_labels/gen_pseudo_labels.py'_) and modify _data_root_ variable inside '_if \_\_name\_\_ == "\_\_main\_\__"', after that, simply run script:
 
 ```bash
-python ./generate_pseudo_labels/gen_pseudo_labels.py
+python ./gen_pseudo_labels.py
 ```
 
+**NOTE**: _gen_pseudo_labels.py__ can be found in _./generate_pseudo_labels/_
 
 ## Training of Quality Regression Model
 
