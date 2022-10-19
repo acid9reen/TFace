@@ -6,6 +6,8 @@ import numpy as np
 from tqdm import tqdm
 from scipy.stats import wasserstein_distance
 
+from extract_embedding.config_test import Config
+
 
 def buildDict_people(datalistFile, featsFile):
     """
@@ -341,7 +343,9 @@ if __name__ == "__main__":
     and save it to txt files
     """
 
-    data_root = r"C:\Users\Ruslan\repos\face_image_quality_test\lfw-deepfunneled"
+    config = Config()
+
+    data_root = config.data_root
     datalistFile = "./DATA.label"
     featsFile = "./feats_npy/Embedding_Features.npy"
     create_dir = "./annotations"
