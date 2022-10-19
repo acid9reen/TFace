@@ -26,31 +26,13 @@ For most cases you want to modify some of the following variables:
 
 **NOTE**: usually for different models you want to use different preprocessing, do not forget to edit __transform__
 
-### 2. Obtain data list
-Change all \<...\> occurrences for your specific parameters
+### 2. Generate pseudo labels
 
 ```bash
-python ./gen_datalist.py <path to dataset root>
+make dataset_root=<dataset root>
 ```
 
-**NOTE**: _gen\_datalist.py__ can be found in _./generate\_pseudo\_labels/_
-
-### 3. Extract face embeddings
-
-```bash
-python ./extract_feats.py
-```
-
-**NOTE**: _extract\_feats.py__ can be found in _.'./generate\_pseudo\_labels/extract\_embedding/_
-
-### 4. Calculate quality pseudo-labels
-Firstly you need to open script (_'generate_pseudo_labels/gen_pseudo_labels.py'_) and modify _data_root_ variable inside '_if \_\_name\_\_ == "\_\_main\_\__"', after that, simply run script:
-
-```bash
-python ./gen_pseudo_labels.py
-```
-
-**NOTE**: _gen\_pseudo\_labels.py_ can be found in _./generate\_pseudo\_labels/_
+**NOTE**: Change all \<...\> occurrences for your specific parameters
 
 ## Training of Quality Regression Model
 
@@ -61,7 +43,7 @@ Change needed values in _train\_confing.py_
 ### 2. Run training
 
 ```bash
-./local_train.sh
+make train
 ```
 
 ## Prediction of FIQA 
